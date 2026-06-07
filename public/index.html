@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NEEV — Outreach Enrichment</title>
+<style>
+  :root {
+    --bg: #faf9f7;
+    --text: #1a1a1a;
+    --border: #e0ddd8;
+    --grey: #9a958e;
+    --green: #2e7d4f;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+  }
+  header {
+    padding: 24px 32px 0 32px;
+  }
+  h1 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    letter-spacing: 0.02em;
+  }
+  .sub { color: var(--grey); margin-bottom: 16px; }
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .tab {
+    padding: 10px 20px;
+    cursor: pointer;
+    border: 0.5px solid var(--border);
+    border-bottom: none;
+    background: #fff;
+    border-radius: 6px 6px 0 0;
+    color: var(--grey);
+  }
+  .tab.active { color: var(--text); font-weight: 600; background: var(--bg); }
+  main { padding: 24px 32px 64px 32px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    background: #fff;
+  }
+  .stat-card .num { font-size: 24px; font-weight: 600; }
+  .stat-card .label { color: var(--grey); font-size: 12px; margin-top: 4px; }
+
+  .progress-bar-track {
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--text);
+    transition: width 0.3s ease;
+  }
+  .log-line {
+    color: var(--grey);
+    font-size: 12px;
+    margin-bottom: 16px;
+    min-height: 16px;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 24px;
+  }
+  .chip {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 12px;
+    border: 0.5px solid var(--border);
+    color: var(--grey);
+    background: #fff;
+  }
+  .chip.active { background: var(--text); color: #fff; border-color: var(--text); }
+  .chip.done { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 9px 16px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    cursor: pointer;
+  }
+  button.primary { background: var(--text); color: #fff; border-color: var(--text); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button:hover:not(:disabled) { filter: brightness(0.96); }
+
+  select, input[type=text] {
+    font-family: inherit;
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 0.5px solid var(--border);
+    background: #fff;
+    color: var(--text);
+  }
+
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey);
+    padding: 10px 12px;
+    border-bottom: 0.5px solid var(--border);
+  }
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 0.5px solid var(--border);
+    font-size: 13px;
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.clickable { cursor: pointer; }
+  tbody tr.clickable:hover { background: #f5f3f0; }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 0.5px solid var(--border);
+    color: var(--grey);
+  }
+  .badge.has-draft { background: var(--green); color: #fff; border-color: var(--green); }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(26,26,26,0.4);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 10px;
+    border: 0.5px solid var(--border);
+    width: 560px;
+    max-width: 92vw;
+    max-height: 84vh;
+    overflow-y: auto;
+    padding: 24px;
+  }
+  .modal h2 { margin: 0 0 4px 0; font-size: 16px; }
+  .modal .meta { color: var(--grey); font-size: 12px; margin-bottom: 16px; }
+  .modal .field-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--grey); margin: 16px 0 4px 0; }
+  .modal .subject { font-weight: 600; }
+  .modal .body-text { white-space: pre-wrap; line-height: 1.6; }
+  .modal .modal-actions { display: flex; gap: 8px; margin-top: 20px; }
+  .modal .close-btn { float: right; }
+
+  .section-title { font-weight: 600; margin: 28px 0 12px 0; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NEEV — Outreach Enrichment</h1>
+  <div class="sub">Contact list enrichment &amp; personalized outreach email generation</div>
+  <div class="tabs">
+    <div class="tab active" data-tab="enrich">Enrich</div>
+    <div class="tab" data-tab="drafts">Email drafts</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- ========================= TAB 1: ENRICH ========================= -->
+  <section class="panel active" id="panel-enrich">
+    <div class="stats" id="enrich-stats"></div>
+
+    <div class="controls">
+      <button class="primary" id="btn-start-enrich">Run enrichment (37 batches)</button>
+      <button id="btn-pause-enrich" disabled>Pause</button>
+      <button id="btn-export-klaviyo">Export Klaviyo CSV</button>
+      <button id="btn-export-full">Export full list CSV</button>
+    </div>
+
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="enrich-progress-fill"></div></div>
+    <div class="log-line" id="enrich-log">Idle.</div>
+
+    <div class="chips" id="enrich-chips"></div>
+
+    <div class="section-title">Newly found contacts (this run)</div>
+    <table>
+      <thead><tr>
+        <th>Name</th><th>Type</th><th>Instagram</th><th>TikTok</th><th>Email</th><th>Location</th><th>Why relevant</th>
+      </tr></thead>
+      <tbody id="enrich-new-body"></tbody>
+    </table>
+  </section>
+
+  <!-- ========================= TAB 2: DRAFTS ========================= -->
+  <section class="panel" id="panel-drafts">
+    <div class="stats" id="drafts-stats"></div>
+
+    <div class="controls">
+      <button class="primary" id="btn-start-drafts">Generate drafts</button>
+      <button id="btn-pause-drafts" disabled>Pause</button>
+      <select id="drafts-filter">
+        <option value="all">All</option>
+        <option value="influencer">Influencers</option>
+        <option value="press">Press</option>
+        <option value="stylist">Stylists</option>
+        <option value="retailer">Retailers</option>
+      </select>
+      <button id="btn-export-drafts">Export drafts CSV</button>
+    </div>
+
+    <div class="progress-bar-track"><div class="progress-bar-fill" id="drafts-progress-fill"></div></div>
+    <div class="log-line" id="drafts-log">Idle.</div>
+
+    <table>
+      <thead><tr>
+        <th>Name</th><th>Type</th><th>Instagram</th><th>Email</th><th>Subject</th><th>Status</th>
+      </tr></thead>
+      <tbody id="drafts-body"></tbody>
+    </table>
+  </section>
+
+</main>
+
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <button class="close-btn" id="modal-close">Close</button>
+    <h2 id="modal-name"></h2>
+    <div class="meta" id="modal-meta"></div>
+    <div class="field-label">Research summary</div>
+    <div id="modal-summary"></div>
+    <div class="field-label">Subject</div>
+    <div class="subject" id="modal-subject"></div>
+    <div class="field-label">Body</div>
+    <div class="body-text" id="modal-body"></div>
+    <div class="modal-actions">
+      <button class="primary" id="modal-copy">Copy email</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  contacts: [],
+  batches: [],
+  enrich: { running: false, paused: false, currentIndex: 0, newContacts: [], status: [] },
+  drafts: { running: false, paused: false, queue: [], current: null }
+};
+
+// ---------------- Tabs ----------------
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+  });
+});
+
+// ---------------- Helpers ----------------
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function fetchJson(url, opts) {
+  const res = await fetch(url, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || ('Request failed: ' + res.status));
+  return data;
+}
+
+function renderStats(containerId, stats) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = stats.map(s => `
+    <div class="stat-card">
+      <div class="num">${s.num}</div>
+      <div class="label">${s.label}</div>
+    </div>
+  `).join('');
+}
+
+// ---------------- Load initial data ----------------
+async function loadAll() {
+  const [contacts, batches] = await Promise.all([
+    fetchJson('/api/contacts'),
+    fetchJson('/api/batches')
+  ]);
+  state.contacts = contacts;
+  state.batches = batches;
+  state.enrich.status = batches.map(() => 'pending');
+  renderEnrichChips();
+  renderEnrichStats();
+  renderDraftsStats();
+  renderDraftsTable();
+}
+
+// ========================================================================
+// TAB 1 — ENRICH
+// ========================================================================
+function renderEnrichStats() {
+  const c = state.contacts;
+  const byType = t => c.filter(x => x.type === t).length;
+  renderStats('enrich-stats', [
+    { num: c.length, label: 'Total contacts' },
+    { num: byType('influencer'), label: 'Influencers' },
+    { num: byType('press'), label: 'Press' },
+    { num: byType('stylist'), label: 'Stylists' },
+    { num: byType('retailer'), label: 'Retailers' },
+    { num: c.filter(x => x.email).length, label: 'With email' },
+    { num: state.enrich.newContacts.length, label: 'New this run' }
+  ]);
+}
+
+function renderEnrichChips() {
+  const el = document.getElementById('enrich-chips');
+  el.innerHTML = state.batches.map((b, i) => {
+    const status = state.enrich.status[i] || 'pending';
+    return `<div class="chip ${status}" title="${escapeHtml(b.query)}">${i + 1}. ${escapeHtml(b.label)}</div>`;
+  }).join('');
+}
+
+function renderEnrichNewTable() {
+  const tbody = document.getElementById('enrich-new-body');
+  tbody.innerHTML = state.enrich.newContacts.map(c => `
+    <tr>
+      <td>${escapeHtml(c.name)}</td>
+      <td>${escapeHtml(c.type)}</td>
+      <td>${c.ig ? '@' + escapeHtml(c.ig) : ''}</td>
+      <td>${c.tt ? '@' + escapeHtml(c.tt) : ''}</td>
+      <td>${escapeHtml(c.email)}</td>
+      <td>${escapeHtml(c.location)}</td>
+      <td>${escapeHtml(c.notes)}</td>
+    </tr>
+  `).join('');
+}
+
+function setEnrichLog(msg) {
+  document.getElementById('enrich-log').textContent = msg;
+}
+
+function setEnrichProgress(done, total) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('enrich-progress-fill').style.width = pct + '%';
+}
+
+async function runEnrichment() {
+  if (state.enrich.running) return;
+  state.enrich.running = true;
+  state.enrich.paused = false;
+  document.getElementById('btn-start-enrich').disabled = true;
+  document.getElementById('btn-pause-enrich').disabled = false;
+  document.getElementById('btn-pause-enrich').textContent = 'Pause';
+
+  const total = state.batches.length;
+
+  for (let i = state.enrich.currentIndex; i < total; i++) {
+    if (state.enrich.paused) {
+      state.enrich.currentIndex = i;
+      state.enrich.running = false;
+      document.getElementById('btn-start-enrich').disabled = false;
+      document.getElementById('btn-start-enrich').textContent = 'Resume enrichment';
+      document.getElementById('btn-pause-enrich').disabled = true;
+      setEnrichLog(`Paused at batch ${i + 1}/${total}.`);
+      return;
+    }
+
+    state.enrich.status[i] = 'active';
+    renderEnrichChips();
+    setEnrichLog(`Running batch ${i + 1}/${total}: ${state.batches[i].label}…`);
+
+    try {
+      const result = await fetchJson('/api/enrich/batch', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ index: i })
+      });
+      state.enrich.status[i] = 'done';
+      state.enrich.newContacts.push(...result.added);
+      setEnrichLog(`Batch ${i + 1}/${total} done — found ${result.foundCount}, added ${result.addedCount} new (total: ${result.totalContacts}).`);
+      const fresh = await fetchJson('/api/contacts');
+      state.contacts = fresh;
+      renderEnrichStats();
+      renderEnrichNewTable();
+    } catch (err) {
+      state.enrich.status[i] = 'done';
+      setEnrichLog(`Batch ${i + 1}/${total} failed: ${err.message}`);
+    }
+
+    renderEnrichChips();
+    setEnrichProgress(i + 1, total);
+    state.enrich.currentIndex = i + 1;
+  }
+
+  state.enrich.running = false;
+  document.getElementById('btn-start-enrich').disabled = false;
+  document.getElementById('btn-start-enrich').textContent = 'Run enrichment (37 batches)';
+  document.getElementById('btn-pause-enrich').disabled = true;
+  setEnrichLog(`Done — ran ${total} batches, added ${state.enrich.newContacts.length} new contacts.`);
+}
+
+document.getElementById('btn-start-enrich').addEventListener('click', runEnrichment);
+document.getElementById('btn-pause-enrich').addEventListener('click', () => {
+  state.enrich.paused = true;
+  document.getElementById('btn-pause-enrich').disabled = true;
+  setEnrichLog('Pausing after current batch…');
+});
+
+document.getElementById('btn-export-klaviyo').addEventListener('click', () => {
+  window.location.href = '/api/export/klaviyo';
+});
+document.getElementById('btn-export-full').addEventListener('click', () => {
+  window.location.href = '/api/export/full';
+});
+
+// ========================================================================
+// TAB 2 — EMAIL DRAFTS
+// ========================================================================
+function renderDraftsStats() {
+  const c = state.contacts;
+  const withDraft = c.filter(x => x.draft && x.draft.body);
+  renderStats('drafts-stats', [
+    { num: c.length, label: 'Total contacts' },
+    { num: withDraft.length, label: 'Drafts complete' },
+    { num: c.length - withDraft.length, label: 'Remaining' },
+    { num: withDraft.filter(x => x.draft.lang === 'fr').length, label: 'French drafts' },
+    { num: withDraft.filter(x => x.draft.lang === 'en').length, label: 'English drafts' }
+  ]);
+}
+
+function currentDraftFilter() {
+  return document.getElementById('drafts-filter').value;
+}
+
+function renderDraftsTable() {
+  const filter = currentDraftFilter();
+  const tbody = document.getElementById('drafts-body');
+  const rows = state.contacts.filter(c => filter === 'all' || c.type === filter);
+  tbody.innerHTML = rows.map(c => {
+    const hasDraft = c.draft && c.draft.body;
+    return `
+      <tr class="${hasDraft ? 'clickable' : ''}" data-name="${escapeHtml(c.name)}">
+        <td>${escapeHtml(c.name)}</td>
+        <td>${escapeHtml(c.type)}</td>
+        <td>${c.ig ? '@' + escapeHtml(c.ig) : ''}</td>
+        <td>${escapeHtml(c.email)}</td>
+        <td>${hasDraft ? escapeHtml(c.draft.subject) : ''}</td>
+        <td><span class="badge ${hasDraft ? 'has-draft' : ''}">${hasDraft ? 'Draft ready' : 'Pending'}</span></td>
+      </tr>
+    `;
+  }).join('');
+
+  tbody.querySelectorAll('tr.clickable').forEach(tr => {
+    tr.addEventListener('click', () => openDraftModal(tr.dataset.name));
+  });
+}
+
+document.getElementById('drafts-filter').addEventListener('change', renderDraftsTable);
+
+function setDraftsLog(msg) {
+  document.getElementById('drafts-log').textContent = msg;
+}
+
+function setDraftsProgress(done, total) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('drafts-progress-fill').style.width = pct + '%';
+}
+
+async function runDraftGeneration() {
+  if (state.drafts.running) return;
+
+  const pending = state.contacts.filter(c => !(c.draft && c.draft.body));
+  if (!state.drafts.queue.length) {
+    state.drafts.queue = pending.map(c => c.name);
+  }
+  const total = state.contacts.length;
+
+  state.drafts.running = true;
+  state.drafts.paused = false;
+  document.getElementById('btn-start-drafts').disabled = true;
+  document.getElementById('btn-pause-drafts').disabled = false;
+  document.getElementById('btn-pause-drafts').textContent = 'Pause';
+
+  while (state.drafts.queue.length) {
+    if (state.drafts.paused) {
+      state.drafts.running = false;
+      document.getElementById('btn-start-drafts').disabled = false;
+      document.getElementById('btn-start-drafts').textContent = 'Resume generation';
+      document.getElementById('btn-pause-drafts').disabled = true;
+      setDraftsLog(`Paused — ${state.drafts.queue.length} remaining.`);
+      return;
+    }
+
+    const name = state.drafts.queue.shift();
+    setDraftsLog(`Researching & writing draft for ${name}…`);
+    try {
+      await fetchJson('/api/draft/generate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name })
+      });
+      const fresh = await fetchJson('/api/contacts');
+      state.contacts = fresh;
+      const done = state.contacts.filter(c => c.draft && c.draft.body).length;
+      setDraftsProgress(done, total);
+      renderDraftsStats();
+      renderDraftsTable();
+      setDraftsLog(`Draft ready for ${name} (${done}/${total} complete).`);
+    } catch (err) {
+      setDraftsLog(`Failed for ${name}: ${err.message}`);
+    }
+  }
+
+  state.drafts.running = false;
+  document.getElementById('btn-start-drafts').disabled = false;
+  document.getElementById('btn-start-drafts').textContent = 'Generate drafts';
+  document.getElementById('btn-pause-drafts').disabled = true;
+  setDraftsLog('All drafts generated.');
+}
+
+document.getElementById('btn-start-drafts').addEventListener('click', runDraftGeneration);
+document.getElementById('btn-pause-drafts').addEventListener('click', () => {
+  state.drafts.paused = true;
+  document.getElementById('btn-pause-drafts').disabled = true;
+  setDraftsLog('Pausing after current draft…');
+});
+
+document.getElementById('btn-export-drafts').addEventListener('click', () => {
+  window.location.href = '/api/export/drafts';
+});
+
+// ---------------- Modal ----------------
+function openDraftModal(name) {
+  const c = state.contacts.find(x => x.name === name);
+  if (!c || !c.draft) return;
+  document.getElementById('modal-name').textContent = c.name;
+  document.getElementById('modal-meta').textContent =
+    `${c.type}${c.ig ? ' · @' + c.ig : ''}${c.email ? ' · ' + c.email : ''} · ${c.draft.lang === 'fr' ? 'French' : 'English'}`;
+  document.getElementById('modal-summary').textContent = c.draft.research_summary || '';
+  document.getElementById('modal-subject').textContent = c.draft.subject || '';
+  document.getElementById('modal-body').textContent = c.draft.body || '';
+  document.getElementById('modal-overlay').classList.add('open');
+
+  document.getElementById('modal-copy').onclick = () => {
+    const text = `Subject: ${c.draft.subject}\n\n${c.draft.body}`;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.getElementById('modal-copy');
+      const original = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    });
+  };
+}
+
+document.getElementById('modal-close').addEventListener('click', () => {
+  document.getElementById('modal-overlay').classList.remove('open');
+});
+document.getElementById('modal-overlay').addEventListener('click', (e) => {
+  if (e.target.id === 'modal-overlay') document.getElementById('modal-overlay').classList.remove('open');
+});
+
+// ---------------- Init ----------------
+loadAll().catch(err => {
+  setEnrichLog('Failed to load: ' + err.message);
+  setDraftsLog('Failed to load: ' + err.message);
+});
+</script>
+
+</body>
+</html>
